@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analisis Fundamental Saham Pro</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0F1117;
+    --bg2: #161A24;
+    --bg3: #1E2333;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #E8EAED;
+    --text2: #9AA0B4;
+    --text3: #5C6380;
+    --accent: #3B82F6;
+    --accent2: #60A5FA;
+    --green: #22C55E;
+    --green2: #16A34A;
+    --red: #EF4444;
+    --red2: #DC2626;
+    --yellow: #F59E0B;
+    --yellow2: #D97706;
+    --purple: #A78BFA;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; font-size: 14px; }
+
+  /* ===== LAYOUT ===== */
+  .app { max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; }
+
+  /* ===== HEADER ===== */
+  .header {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    margin-bottom: 28px; padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-brand { display: flex; align-items: center; gap: 14px; }
+  .header-icon {
+    width: 42px; height: 42px; background: var(--accent);
+    border-radius: var(--radius); display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: #fff;
+  }
+  .header-title { font-size: 20px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
+  .header-sub { font-size: 12px; color: var(--text3); margin-top: 2px; font-family: var(--mono); }
+  .header-badge {
+    background: linear-gradient(135deg, #1E3A8A, #1D4ED8);
+    border: 1px solid #3B82F6;
+    color: #93C5FD; font-size: 11px; font-weight: 600;
+    padding: 4px 10px; border-radius: 20px; font-family: var(--mono); letter-spacing: 0.05em;
+  }
+
+  /* ===== NAV TABS ===== */
+  .nav { display: flex; gap: 2px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 4px; margin-bottom: 24px; overflow-x: auto; }
+  .nav-tab {
+    flex: 1; min-width: 100px; padding: 9px 14px; font-size: 12px; font-weight: 500;
+    border: none; border-radius: var(--radius); cursor: pointer; background: transparent;
+    color: var(--text3); transition: all 0.2s; white-space: nowrap; font-family: var(--sans);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .nav-tab.active { background: var(--bg3); color: var(--text); border: 1px solid var(--border2); }
+  .nav-tab:hover:not(.active) { color: var(--text2); }
+
+  /* ===== PANELS ===== */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ===== SECTION LABELS ===== */
+  .slabel {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text3); margin: 20px 0 10px; font-family: var(--mono);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .slabel::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ===== INPUT COMPONENTS ===== */
+  .input-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .input-group { display: flex; flex-direction: column; gap: 5px; }
+  .input-group label { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+  .input-group input, .input-group select {
+    width: 100%; padding: 8px 10px; font-size: 13px; font-family: var(--mono);
+    border: 1px solid var(--border2); border-radius: var(--radius);
+    background: var(--bg3); color: var(--text); outline: none;
+    transition: border-color 0.15s;
+  }
+  .input-group input:focus, .input-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+  .input-group input::placeholder { color: var(--text3); }
+  .input-hint { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+
+  /* ===== BUTTONS ===== */
+  .btn {
+    padding: 9px 18px; font-size: 13px; font-weight: 500; border: none;
+    border-radius: var(--radius); cursor: pointer; transition: all 0.15s; font-family: var(--sans);
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-ghost { background: var(--bg3); color: var(--text2); border: 1px solid var(--border2); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border2); }
+  .btn-full { width: 100%; justify-content: center; padding: 12px; }
+
+  .ticker-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .ticker-input {
+    flex: 1; padding: 10px 14px; font-size: 15px; font-weight: 600;
+    border: 1px solid var(--border2); border-radius: var(--radius);
+    background: var(--bg3); color: var(--text); outline: none; font-family: var(--mono);
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .ticker-input:focus { border-color: var(--accent); }
+
+  .preset-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .preset-chip {
+    padding: 4px 12px; font-size: 11px; border: 1px solid var(--border2);
+    border-radius: 20px; cursor: pointer; background: transparent;
+    color: var(--text3); transition: all 0.15s; font-family: var(--mono);
+  }
+  .preset-chip:hover { border-color: var(--accent); color: var(--accent2); background: rgba(59,130,246,0.08); }
+
+  /* ===== CARDS ===== */
+  .card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 18px;
+  }
+  .card + .card { margin-top: 12px; }
+
+  /* ===== SCORE HERO ===== */
+  .score-hero {
+    display: flex; align-items: center; gap: 20px;
+    padding: 20px; border-radius: var(--radius-lg);
+    border: 1px solid var(--border2); background: var(--bg2); margin-bottom: 16px;
+  }
+  .score-ring {
+    width: 90px; height: 90px; border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 28px; font-weight: 700; flex-shrink: 0; font-family: var(--mono);
+    border: 3px solid currentColor; position: relative;
+  }
+  .score-ring span { font-size: 11px; font-weight: 400; }
+  .score-info { flex: 1; }
+  .score-ticker { font-size: 18px; font-weight: 700; font-family: var(--mono); letter-spacing: 0.1em; }
+  .score-sector { font-size: 12px; color: var(--text3); margin: 3px 0 8px; font-family: var(--mono); }
+  .score-verdict-label { font-size: 13px; font-weight: 600; }
+  .score-verdict-desc { font-size: 12px; color: var(--text2); line-height: 1.6; margin-top: 4px; }
+
+  /* ===== METRICS GRID ===== */
+  .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .metric-card { background: var(--bg3); border-radius: var(--radius); padding: 12px 14px; border: 1px solid var(--border); }
+  .metric-name { font-size: 10px; color: var(--text3); font-family: var(--mono); letter-spacing: 0.05em; margin-bottom: 5px; }
+  .metric-value { font-size: 20px; font-weight: 600; font-family: var(--mono); color: var(--text); }
+  .metric-signal { font-size: 10px; margin-top: 4px; font-weight: 600; font-family: var(--mono); }
+  .sig-good { color: var(--green); }
+  .sig-warn { color: var(--yellow); }
+  .sig-bad { color: var(--red); }
+  .sig-neutral { color: var(--text3); }
+
+  /* ===== CATEGORY BARS ===== */
+  .cat-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .cat-item { background: var(--bg3); border-radius: var(--radius); padding: 12px 14px; border: 1px solid var(--border); }
+  .cat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .cat-name { font-size: 13px; font-weight: 500; }
+  .cat-score-val { font-size: 13px; font-weight: 700; font-family: var(--mono); }
+  .cat-sub { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-bottom: 6px; }
+  .bar-track { height: 4px; border-radius: 2px; background: var(--border2); }
+  .bar-fill { height: 100%; border-radius: 2px; transition: width 0.8s cubic-bezier(0.16,1,0.3,1); }
+
+  /* ===== CHART WRAP ===== */
+  .chart-wrap { position: relative; width: 100%; height: 220px; margin-bottom: 16px; }
+
+  /* ===== TABLE ===== */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .data-table th {
+    text-align: left; padding: 8px 10px; font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3);
+    font-family: var(--mono); border-bottom: 1px solid var(--border);
+  }
+  .data-table td { padding: 9px 10px; border-bottom: 1px solid var(--border); font-family: var(--mono); }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table td:first-child { color: var(--text2); }
+  .data-table .center { text-align: center; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; font-family: var(--mono); }
+  .tag-green { background: rgba(34,197,94,0.15); color: var(--green); }
+  .tag-red { background: rgba(239,68,68,0.15); color: var(--red); }
+  .tag-yellow { background: rgba(245,158,11,0.15); color: var(--yellow); }
+  .tag-blue { background: rgba(59,130,246,0.15); color: var(--accent2); }
+
+  /* ===== AI BOX ===== */
+  .ai-box { border: 1px solid rgba(59,130,246,0.3); border-radius: var(--radius-lg); padding: 16px 18px; background: rgba(59,130,246,0.05); margin-top: 16px; }
+  .ai-header { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--accent2); margin-bottom: 10px; font-family: var(--mono); }
+  .ai-body { font-size: 12px; color: var(--text2); line-height: 1.75; }
+  .ai-loading { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text3); font-family: var(--mono); }
+  .ai-loading::after { content: ''; width: 12px; height: 12px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .ask-btn {
+    margin-top: 12px; width: 100%; padding: 9px; font-size: 12px;
+    border-radius: var(--radius); border: 1px solid var(--border2);
+    background: transparent; color: var(--text3); cursor: pointer;
+    transition: all 0.15s; font-family: var(--mono); text-align: left;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .ask-btn:hover { border-color: var(--accent); color: var(--accent2); background: rgba(59,130,246,0.06); }
+
+  /* ===== DCF PANEL ===== */
+  .dcf-result-box {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 20px; margin-top: 16px;
+  }
+  .dcf-main { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .dcf-stat { text-align: center; }
+  .dcf-stat-label { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-bottom: 6px; }
+  .dcf-stat-value { font-size: 24px; font-weight: 700; font-family: var(--mono); }
+  .dcf-stat-sub { font-size: 10px; color: var(--text3); margin-top: 3px; font-family: var(--mono); }
+
+  .dcf-scenario-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .dcf-scenario { padding: 10px 12px; border-radius: var(--radius); border: 1px solid var(--border); text-align: center; }
+  .dcf-scenario-label { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-bottom: 4px; }
+  .dcf-scenario-val { font-size: 16px; font-weight: 700; font-family: var(--mono); }
+  .dcf-scenario-desc { font-size: 10px; color: var(--text3); margin-top: 3px; font-family: var(--mono); }
+
+  /* ===== HISTORICAL PANEL ===== */
+  .hist-year-tabs { display: flex; gap: 4px; margin-bottom: 14px; }
+  .year-tab { padding: 5px 12px; font-size: 11px; font-family: var(--mono); border: 1px solid var(--border2); border-radius: 20px; cursor: pointer; background: transparent; color: var(--text3); transition: all 0.15s; }
+  .year-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .hist-year-form { display: none; }
+  .hist-year-form.active { display: block; }
+  .hist-input-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+
+  /* ===== SCREENER PANEL ===== */
+  .screener-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .screener-slot { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px; }
+  .screener-slot-title { font-size: 11px; font-weight: 600; color: var(--text3); font-family: var(--mono); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .slot-num { background: var(--bg3); width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+
+  .compare-table-wrap { overflow-x: auto; }
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 600px; }
+  .compare-table th { padding: 10px 12px; background: var(--bg3); border-bottom: 1px solid var(--border); font-size: 10px; font-family: var(--mono); font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3); }
+  .compare-table th:first-child { text-align: left; }
+  .compare-table th:not(:first-child) { text-align: center; }
+  .compare-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); font-family: var(--mono); }
+  .compare-table td:first-child { color: var(--text2); font-size: 11px; }
+  .compare-table td:not(:first-child) { text-align: center; }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .best-val { color: var(--green); font-weight: 700; }
+  .worst-val { color: var(--red); }
+
+  /* ===== SCROLLBAR ===== */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* ===== DIVIDER ===== */
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 600px) {
+    .metrics-grid { grid-template-columns: 1fr 1fr; }
+    .dcf-main { grid-template-columns: 1fr; gap: 8px; }
+    .dcf-scenario-grid { grid-template-columns: 1fr; }
+    .screener-slots { grid-template-columns: 1fr; }
+    .score-hero { flex-direction: column; text-align: center; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-brand">
+      <div class="header-icon"><i class="fas fa-chart-line"></i></div>
+      <div>
+        <div class="header-title">Analisis Fundamental Saham Pro</div>
+        <div class="header-sub">// financial intelligence · fundamental analysis engine</div>
+      </div>
+    </div>
+    <div class="header-badge">PRO v2.0</div>
+  </div>
+
+  <!-- NAV -->
+  <div class="nav">
+    <button class="nav-tab active" onclick="switchPanel('fundamental')"><i class="fas fa-calculator"></i> Fundamental</button>
+    <button class="nav-tab" onclick="switchPanel('dcf')"><i class="fas fa-coins"></i> DCF Valuation</button>
+    <button class="nav-tab" onclick="switchPanel('historical')"><i class="fas fa-history"></i> Historis Multi-Tahun</button>
+    <button class="nav-tab" onclick="switchPanel('screener')"><i class="fas fa-sliders-h"></i> Komparasi Saham</button>
+  </div>
+
+  <!-- ═══════════════════════════ PANEL 1: FUNDAMENTAL ═══════════════════════════ -->
+  <div class="panel active" id="panel-fundamental">
+    <div class="card">
+      <div class="ticker-row">
+        <input class="ticker-input" id="f-ticker" placeholder="KODE SAHAM" />
+        <button class="btn btn-primary" onclick="runFundamental()"><i class="fas fa-search"></i> Analisis</button>
+      </div>
+      <div class="preset-row">
+        <span style="font-size:11px; color:var(--text3); font-family:var(--mono); align-self:center">preset:</span>
+        <button class="preset-chip" onclick="fLoadPreset('bank')">BBCA-like</button>
+        <button class="preset-chip" onclick="fLoadPreset('telco')">TLKM-like</button>
+        <button class="preset-chip" onclick="fLoadPreset('consumer')">UNVR-like</button>
+        <button class="preset-chip" onclick="fLoadPreset('growth')">Growth</button>
+        <button class="preset-chip" onclick="fLoadPreset('mining')">Mining</button>
+      </div>
+
+      <div class="slabel">Valuasi</div>
+      <div class="input-grid">
+        <div class="input-group"><label>P/E Ratio</label><input type="number" id="f-pe" placeholder="15.0" step="0.1"><span class="input-hint">Harga / EPS</span></div>
+        <div class="input-group"><label>P/B Ratio</label><input type="number" id="f-pb" placeholder="2.5" step="0.1"><span class="input-hint">Harga / Nilai buku</span></div>
+        <div class="input-group"><label>EV/EBITDA</label><input type="number" id="f-evebitda" placeholder="8.0" step="0.1"></div>
+        <div class="input-group"><label>Dividend Yield (%)</label><input type="number" id="f-divy" placeholder="3.5" step="0.1"></div>
+      </div>
+
+      <div class="slabel">Profitabilitas</div>
+      <div class="input-grid">
+        <div class="input-group"><label>ROE (%)</label><input type="number" id="f-roe" placeholder="20.0" step="0.1"></div>
+        <div class="input-group"><label>ROA (%)</label><input type="number" id="f-roa" placeholder="10.0" step="0.1"></div>
+        <div class="input-group"><label>Net Profit Margin (%)</label><input type="number" id="f-npm" placeholder="15.0" step="0.1"></div>
+        <div class="input-group"><label>Gross Profit Margin (%)</label><input type="number" id="f-gpm" placeholder="35.0" step="0.1"></div>
+      </div>
+
+      <div class="slabel">Kesehatan Keuangan</div>
+      <div class="input-grid">
+        <div class="input-group"><label>Debt/Equity (D/E)</label><input type="number" id="f-de" placeholder="0.5" step="0.01"><span class="input-hint">Total utang / Ekuitas</span></div>
+        <div class="input-group"><label>Current Ratio</label><input type="number" id="f-cr" placeholder="2.0" step="0.01"><span class="input-hint">Aset lancar / Utang lancar</span></div>
+        <div class="input-group"><label>Interest Coverage (ICR)</label><input type="number" id="f-icr" placeholder="5.0" step="0.1"></div>
+        <div class="input-group"><label>FCF Yield (%)</label><input type="number" id="f-fcfy" placeholder="5.0" step="0.1"><span class="input-hint">FCF / Market Cap</span></div>
+      </div>
+
+      <div class="slabel">Pertumbuhan</div>
+      <div class="input-grid">
+        <div class="input-group"><label>Revenue Growth YoY (%)</label><input type="number" id="f-revg" placeholder="12.0" step="0.1"></div>
+        <div class="input-group"><label>EPS Growth YoY (%)</label><input type="number" id="f-epsg" placeholder="15.0" step="0.1"></div>
+      </div>
+
+      <div class="slabel">Sektor</div>
+      <div class="input-grid">
+        <div class="input-group" style="grid-column:1/-1">
+          <label>Sektor Perusahaan</label>
+          <select id="f-sector">
+            <option value="general">Umum / General</option>
+            <option value="bank">Perbankan</option>
+            <option value="telco">Telekomunikasi</option>
+            <option value="consumer">Consumer Goods</option>
+            <option value="property">Properti</option>
+            <option value="mining">Pertambangan</option>
+            <option value="tech">Teknologi</option>
+            <option value="healthcare">Kesehatan</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top: 18px;">
+        <button class="btn btn-primary btn-full" onclick="runFundamental()"><i class="fas fa-chart-bar"></i> Jalankan Analisis Fundamental</button>
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div id="f-result" style="display:none; margin-top:16px;"></div>
+  </div>
+
+  <!-- ═══════════════════════════ PANEL 2: DCF ═══════════════════════════ -->
+  <div class="panel" id="panel-dcf">
+    <div class="card">
+      <div class="ticker-row">
+        <input class="ticker-input" id="d-ticker" placeholder="KODE SAHAM" />
+      </div>
+
+      <div class="slabel">Arus Kas Bebas (Free Cash Flow)</div>
+      <div class="input-grid">
+        <div class="input-group"><label>FCF Tahun Ini (Rp Miliar)</label><input type="number" id="d-fcf" placeholder="1000" step="1"><span class="input-hint">Free cash flow terkini</span></div>
+        <div class="input-group"><label>Growth Rate Fase 1 (%/thn)</label><input type="number" id="d-g1" placeholder="15" step="0.5"><span class="input-hint">Pertumbuhan 5 tahun pertama</span></div>
+        <div class="input-group"><label>Growth Rate Fase 2 (%/thn)</label><input type="number" id="d-g2" placeholder="10" step="0.5"><span class="input-hint">Pertumbuhan 5 tahun berikut</span></div>
+        <div class="input-group"><label>Terminal Growth Rate (%)</label><input type="number" id="d-tg" placeholder="4" step="0.5"><span class="input-hint">Pertumbuhan jangka panjang</span></div>
+      </div>
+
+      <div class="slabel">Parameter Diskonto</div>
+      <div class="input-grid">
+        <div class="input-group"><label>Discount Rate / WACC (%)</label><input type="number" id="d-wacc" placeholder="10" step="0.5"><span class="input-hint">Biaya modal tertimbang</span></div>
+        <div class="input-group"><label>Jumlah Saham Beredar (Miliar)</label><input type="number" id="d-shares" placeholder="24.6" step="0.1"></div>
+        <div class="input-group"><label>Net Cash/Debt (Rp Miliar)</label><input type="number" id="d-netcash" placeholder="5000" step="100"><span class="input-hint">+ kas bersih / - net debt</span></div>
+        <div class="input-group"><label>Harga Pasar Saat Ini (Rp)</label><input type="number" id="d-price" placeholder="9000" step="50"></div>
+      </div>
+
+      <div class="slabel">Margin of Safety</div>
+      <div class="input-grid">
+        <div class="input-group"><label>Margin of Safety (%)</label><input type="number" id="d-mos" placeholder="20" step="5"><span class="input-hint">Diskon dari nilai intrinsik</span></div>
+      </div>
+
+      <div class="preset-row" style="margin-top:14px">
+        <span style="font-size:11px; color:var(--text3); font-family:var(--mono); align-self:center">preset:</span>
+        <button class="preset-chip" onclick="dLoadPreset('bbca')">BBCA</button>
+        <button class="preset-chip" onclick="dLoadPreset('tlkm')">TLKM</button>
+        <button class="preset-chip" onclick="dLoadPreset('growth')">Growth Tech</button>
+      </div>
+
+      <div style="margin-top:16px">
+        <button class="btn btn-primary btn-full" onclick="runDCF()"><i class="fas fa-coins"></i> Hitung DCF Valuation</button>
+      </div>
+    </div>
+
+    <div id="d-result" style="display:none; margin-top:16px;"></div>
+  </div>
+
+  <!-- ═══════════════════════════ PANEL 3: HISTORIS ═══════════════════════════ -->
+  <div class="panel" id="panel-historical">
+    <div class="card">
+      <div class="ticker-row">
+        <input class="ticker-input" id="h-ticker" placeholder="KODE SAHAM" />
+      </div>
+
+      <p style="font-size:12px; color:var(--text3); font-family:var(--mono); margin-bottom:14px">Masukkan data keuangan per tahun (min. 2 tahun, maks. 5 tahun) untuk melihat tren historis.</p>
+
+      <div class="hist-year-tabs" id="hist-year-tabs">
+        <button class="year-tab active" onclick="histSwitchYear(0)">Thn -4</button>
+        <button class="year-tab" onclick="histSwitchYear(1)">Thn -3</button>
+        <button class="year-tab" onclick="histSwitchYear(2)">Thn -2</button>
+        <button class="year-tab" onclick="histSwitchYear(3)">Thn -1</button>
+        <button class="year-tab" onclick="histSwitchYear(4)">Thn 0 (Terkini)</button>
+      </div>
+
+      <div id="hist-forms">
+        <!-- year forms generated by JS -->
+      </div>
+
+      <div style="margin-top:16px">
+        <button class="btn btn-primary btn-full" onclick="runHistorical()"><i class="fas fa-chart-area"></i> Analisis Tren Historis</button>
+      </div>
+    </div>
+
+    <div id="h-result" style="display:none; margin-top:16px;"></div>
+  </div>
+
+  <!-- ═══════════════════════════ PANEL 4: SCREENER ═══════════════════════════ -->
+  <div class="panel" id="panel-screener">
+    <div class="card">
+      <p style="font-size:12px; color:var(--text3); font-family:var(--mono); margin-bottom:16px">Bandingkan hingga 4 saham sekaligus berdasarkan metrik fundamental kunci. Isi minimal 2 saham.</p>
+
+      <div class="screener-slots" id="screener-slots">
+        <!-- slots generated by JS -->
+      </div>
+
+      <button class="btn btn-primary btn-full" onclick="runScreener()"><i class="fas fa-sliders-h"></i> Bandingkan Saham</button>
+    </div>
+
+    <div id="s-result" style="display:none; margin-top:16px;"></div>
+  </div>
+
+</div><!-- end .app -->
+
+<script>
+// ═══════════════════════════ CONSTANTS ═══════════════════════════
+
+const PRESETS_F = {
+  bank:     { ticker:'BBCA', pe:24, pb:4.2, evebitda:12, divy:2.8, roe:21, roa:3.2, npm:43, gpm:60, de:5.8, cr:1.1, icr:8, fcfy:4, revg:11, epsg:14, sector:'bank' },
+  telco:    { ticker:'TLKM', pe:16, pb:2.8, evebitda:7, divy:5.5, roe:18, roa:8, npm:16, gpm:42, de:0.9, cr:0.9, icr:6, fcfy:7, revg:6, epsg:8, sector:'telco' },
+  consumer: { ticker:'UNVR', pe:35, pb:18, evebitda:22, divy:4.2, roe:60, roa:20, npm:17, gpm:50, de:1.2, cr:0.7, icr:25, fcfy:3, revg:5, epsg:6, sector:'consumer' },
+  growth:   { ticker:'GOTO', pe:null, pb:3.5, evebitda:null, divy:0, roe:-8, roa:-4, npm:-15, gpm:45, de:0.6, cr:2.5, icr:null, fcfy:-5, revg:35, epsg:null, sector:'tech' },
+  mining:   { ticker:'ADRO', pe:8, pb:2.1, evebitda:5, divy:8.5, roe:25, roa:12, npm:22, gpm:38, de:0.4, cr:2.8, icr:12, fcfy:11, revg:18, epsg:20, sector:'mining' }
+};
+
+const BENCHMARKS = {
+  general:    { pe:[10,20], pb:[1,3], roe:[10,20], roa:[5,12], npm:[8,20], de:[0.3,1.5], cr:[1.5,3], icr:[3,8] },
+  bank:       { pe:[8,18], pb:[1,3.5], roe:[12,22], roa:[1.5,3.5], npm:[25,50], de:[4,10], cr:[0.9,1.5], icr:[3,8] },
+  telco:      { pe:[12,22], pb:[2,5], roe:[14,25], roa:[6,14], npm:[12,22], de:[0.5,2], cr:[0.7,1.5], icr:[4,10] },
+  consumer:   { pe:[20,40], pb:[5,15], roe:[20,50], roa:[10,25], npm:[10,20], de:[0.3,1.5], cr:[0.8,2], icr:[8,20] },
+  property:   { pe:[8,20], pb:[0.5,2], roe:[8,18], roa:[3,10], npm:[15,35], de:[0.5,2], cr:[1,2.5], icr:[2,6] },
+  mining:     { pe:[5,15], pb:[0.8,2.5], roe:[10,25], roa:[5,15], npm:[15,30], de:[0.3,2], cr:[1.5,3.5], icr:[3,8] },
+  tech:       { pe:[20,60], pb:[3,15], roe:[10,30], roa:[5,20], npm:[10,25], de:[0.1,1], cr:[2,5], icr:[5,15] },
+  healthcare: { pe:[18,35], pb:[2,8], roe:[12,25], roa:[8,18], npm:[12,25], de:[0.2,1.5], cr:[1.5,3.5], icr:[5,12] }
+};
+
+const SECTOR_NAMES = {
+  general:'Umum', bank:'Perbankan', telco:'Telekomunikasi', consumer:'Consumer Goods',
+  property:'Properti', mining:'Pertambangan', tech:'Teknologi', healthcare:'Kesehatan'
+};
+
+let chartInstances = {};
+
+function destroyChart(id) { if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; } }
+
+function num(id) { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? null : v; }
+function fmt(v, suf='', dec=1) { return v !== null && v !== undefined ? (+v).toFixed(dec)+suf : '—'; }
+
+function scoreMetric(val, low, high, invert=false) {
+  if (val === null) return null;
+  if (!invert) {
+    if (val >= high) return 100;
+    if (val <= low) return 0;
+    return Math.round(((val - low) / (high - low)) * 100);
+  } else {
+    if (val <= low) return 100;
+    if (val >= high) return 0;
+    return Math.round(((high - val) / (high - low)) * 100);
+  }
+}
+
+function barColor(score) {
+  if (score >= 70) return '#22C55E';
+  if (score >= 50) return '#3B82F6';
+  if (score >= 35) return '#F59E0B';
+  return '#EF4444';
+}
+
+// ═══════════════════════════ PANEL SWITCH ═══════════════════════════
+
+function switchPanel(name) {
+  ['fundamental','dcf','historical','screener'].forEach(p => {
+    document.getElementById('panel-'+p).classList.toggle('active', p === name);
+  });
+  document.querySelectorAll('.nav-tab').forEach((t,i) => {
+    t.classList.toggle('active', ['fundamental','dcf','historical','screener'][i] === name);
+  });
+}
+
+// ═══════════════════════════ PANEL 1: FUNDAMENTAL ═══════════════════════════
+
+function fLoadPreset(key) {
+  const p = PRESETS_F[key];
+  document.getElementById('f-ticker').value = p.ticker;
+  ['pe','pb','evebitda','divy','roe','roa','npm','gpm','de','cr','icr','fcfy','revg','epsg'].forEach(k => {
+    const el = document.getElementById('f-'+k);
+    if (el) el.value = (p[k] !== null && p[k] !== undefined) ? p[k] : '';
+  });
+  document.getElementById('f-sector').value = p.sector;
+}
+
+function runFundamental() {
+  const ticker = document.getElementById('f-ticker').value.trim().toUpperCase() || 'SAHAM';
+  const sector = document.getElementById('f-sector').value;
+  const bm = BENCHMARKS[sector] || BENCHMARKS.general;
+
+  const data = {
+    pe: num('f-pe'), pb: num('f-pb'), evebitda: num('f-evebitda'), divy: num('f-divy'),
+    roe: num('f-roe'), roa: num('f-roa'), npm: num('f-npm'), gpm: num('f-gpm'),
+    de: num('f-de'), cr: num('f-cr'), icr: num('f-icr'), fcfy: num('f-fcfy'),
+    revg: num('f-revg'), epsg: num('f-epsg')
+  };
+
+  const scores = { valuasi:[], profitabilitas:[], kesehatan:[], pertumbuhan:[] };
+  if (data.pe !== null) scores.valuasi.push(scoreMetric(data.pe, bm.pe[0], bm.pe[1], true));
+  if (data.pb !== null) scores.valuasi.push(scoreMetric(data.pb, bm.pb[0], bm.pb[1], true));
+  if (data.divy !== null) scores.valuasi.push(Math.min(100, data.divy * 15));
+  if (data.roe !== null) scores.profitabilitas.push(scoreMetric(data.roe, bm.roe[0], bm.roe[1]));
+  if (data.roa !== null) scores.profitabilitas.push(scoreMetric(data.roa, bm.roa[0], bm.roa[1]));
+  if (data.npm !== null) scores.profitabilitas.push(scoreMetric(data.npm, bm.npm[0], bm.npm[1]));
+  if (data.de !== null) scores.kesehatan.push(scoreMetric(data.de, bm.de[0], bm.de[1], true));
+  if (data.cr !== null) scores.kesehatan.push(scoreMetric(data.cr, bm.cr[0], bm.cr[1]));
+  if (data.icr !== null) scores.kesehatan.push(scoreMetric(data.icr, bm.icr[0], bm.icr[1]));
+  if (data.fcfy !== null) scores.kesehatan.push(Math.min(100, Math.max(0, data.fcfy * 8)));
+  if (data.revg !== null) scores.pertumbuhan.push(Math.min(100, Math.max(0, data.revg * 3)));
+  if (data.epsg !== null) scores.pertumbuhan.push(Math.min(100, Math.max(0, data.epsg * 3)));
+
+  const avg = arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : 50;
+  const cat = { valuasi: avg(scores.valuasi), profitabilitas: avg(scores.profitabilitas), kesehatan: avg(scores.kesehatan), pertumbuhan: avg(scores.pertumbuhan) };
+  const total = Math.round(cat.valuasi*0.25 + cat.profitabilitas*0.30 + cat.kesehatan*0.30 + cat.pertumbuhan*0.15);
+
+  let verdict, scoreClr, verdict2;
+  if (total >= 75) { verdict = 'Fundamental Sangat Kuat'; scoreClr = '#22C55E'; verdict2 = 'Metrik fundamental superior — profil risiko rendah dengan potensi return menarik.'; }
+  else if (total >= 60) { verdict = 'Fundamental Baik'; scoreClr = '#3B82F6'; verdict2 = 'Fundamental solid dengan beberapa area yang bisa dioptimasi. Layak dipertimbangkan.'; }
+  else if (total >= 45) { verdict = 'Fundamental Cukup'; scoreClr = '#F59E0B'; verdict2 = 'Campuran kekuatan dan kelemahan. Perlu analisis lanjut dan monitoring ketat.'; }
+  else { verdict = 'Fundamental Lemah'; scoreClr = '#EF4444'; verdict2 = 'Metrik menunjukkan tekanan signifikan. Risiko tinggi, pertimbangkan dengan hati-hati.'; }
+
+  function sig(v, good, warn, inv) {
+    if (v === null) return ['—', 'sig-neutral'];
+    const isGood = inv ? v <= good : v >= good;
+    const isWarn = inv ? v <= warn : v >= warn;
+    if (isGood) return ['↑ Baik', 'sig-good'];
+    if (isWarn) return ['→ Moderat', 'sig-warn'];
+    return ['↓ Perhatian', 'sig-bad'];
+  }
+
+  const metricCards = [
+    { name:'P/E Ratio', val:fmt(data.pe,'x'), sig:sig(data.pe, bm.pe[0], bm.pe[0]+((bm.pe[1]-bm.pe[0])*.5), true) },
+    { name:'P/B Ratio', val:fmt(data.pb,'x'), sig:sig(data.pb, bm.pb[0], bm.pb[0]+((bm.pb[1]-bm.pb[0])*.5), true) },
+    { name:'ROE', val:fmt(data.roe,'%'), sig:sig(data.roe, bm.roe[1], bm.roe[0]) },
+    { name:'Net Margin', val:fmt(data.npm,'%'), sig:sig(data.npm, bm.npm[1], bm.npm[0]) },
+    { name:'D/E Ratio', val:fmt(data.de,'x'), sig:sig(data.de, bm.de[0], bm.de[0]+((bm.de[1]-bm.de[0])*.5), true) },
+    { name:'Current Ratio', val:fmt(data.cr,'x'), sig:sig(data.cr, bm.cr[1], bm.cr[0]) },
+  ];
+
+  const benchRows = [
+    { label:'P/E', v:data.pe, lo:bm.pe[0], hi:bm.pe[1], inv:true, suf:'x' },
+    { label:'P/B', v:data.pb, lo:bm.pb[0], hi:bm.pb[1], inv:true, suf:'x' },
+    { label:'ROE', v:data.roe, lo:bm.roe[0], hi:bm.roe[1], inv:false, suf:'%' },
+    { label:'ROA', v:data.roa, lo:bm.roa[0], hi:bm.roa[1], inv:false, suf:'%' },
+    { label:'Net Margin', v:data.npm, lo:bm.npm[0], hi:bm.npm[1], inv:false, suf:'%' },
+    { label:'D/E', v:data.de, lo:bm.de[0], hi:bm.de[1], inv:true, suf:'x' },
+    { label:'Current Ratio', v:data.cr, lo:bm.cr[0], hi:bm.cr[1], inv:false, suf:'x' },
+    { label:'ICR', v:data.icr, lo:bm.icr[0], hi:bm.icr[1], inv:false, suf:'x' },
+  ];
+
+  const el = document.getElementById('f-result');
+  el.style.display = '';
+  el.innerHTML = `
+    <div class="score-hero">
+      <div class="score-ring" style="color:${scoreClr}; border-color:${scoreClr}20; background:${scoreClr}10">
+        ${total}<span>/ 100</span>
+      </div>
+      <div class="score-info">
+        <div class="score-ticker">${ticker}</div>
+        <div class="score-sector">${SECTOR_NAMES[sector] || sector}</div>
+        <div class="score-verdict-label" style="color:${scoreClr}">${verdict}</div>
+        <div class="score-verdict-desc">${verdict2}</div>
+      </div>
+    </div>
+
+    <div class="metrics-grid">
+      ${metricCards.map(m => `
+        <div class="metric-card">
+          <div class="metric-name">${m.name}</div>
+          <div class="metric-value">${m.val}</div>
+          <div class="metric-signal ${m.sig[1]}">${m.sig[0]}</div>
+        </div>`).join('')}
+    </div>
+
+    <div class="slabel" style="margin-top:0">Skor per Kategori</div>
+    <div class="cat-list">
+      ${[
+        { label:'Valuasi', icon:'fa-tag', s:cat.valuasi, desc:'P/E · P/B · Div Yield' },
+        { label:'Profitabilitas', icon:'fa-trending-up', s:cat.profitabilitas, desc:'ROE · ROA · Net Margin' },
+        { label:'Kesehatan Keuangan', icon:'fa-shield-alt', s:cat.kesehatan, desc:'D/E · Current Ratio · ICR · FCF Yield' },
+        { label:'Pertumbuhan', icon:'fa-rocket', s:cat.pertumbuhan, desc:'Revenue Growth · EPS Growth' },
+      ].map(c => `
+        <div class="cat-item">
+          <div class="cat-header">
+            <div class="cat-name"><i class="fas ${c.icon}" style="color:${barColor(c.s)}; margin-right:8px; font-size:12px"></i>${c.label}</div>
+            <div class="cat-score-val" style="color:${barColor(c.s)}">${c.s} / 100</div>
+          </div>
+          <div class="cat-sub">${c.desc}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${c.s}%; background:${barColor(c.s)}"></div></div>
+        </div>`).join('')}
+    </div>
+
+    <div class="slabel">Profil Radar</div>
+    <div class="chart-wrap"><canvas id="f-radar"></canvas></div>
+
+    <div class="slabel">Posisi vs Benchmark Sektor — ${SECTOR_NAMES[sector]}</div>
+    <div class="card" style="padding:0; overflow:hidden;">
+      <table class="data-table">
+        <thead><tr>
+          <th>Metrik</th>
+          <th class="center">${ticker}</th>
+          <th class="center">Batas Bawah</th>
+          <th class="center">Batas Atas</th>
+          <th class="center">Status</th>
+        </tr></thead>
+        <tbody>
+          ${benchRows.map(r => {
+            let tag = '<span class="tag tag-blue">—</span>';
+            if (r.v !== null) {
+              const good = r.inv ? r.v <= r.lo : r.v >= r.hi;
+              const bad  = r.inv ? r.v >= r.hi : r.v <= r.lo;
+              tag = good ? '<span class="tag tag-green">Unggul</span>' : bad ? '<span class="tag tag-red">Di luar</span>' : '<span class="tag tag-blue">Normal</span>';
+            }
+            return `<tr>
+              <td>${r.label}</td>
+              <td class="center" style="color:var(--text)">${r.v !== null ? (+r.v).toFixed(1)+r.suf : '—'}</td>
+              <td class="center">${(+r.lo).toFixed(1)+r.suf}</td>
+              <td class="center">${(+r.hi).toFixed(1)+r.suf}</td>
+              <td class="center">${tag}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <button class="ask-btn" onclick="sendPrompt('Berikan analisis mendalam fundamental ${ticker} dengan skor ${total}/100 di sektor ${SECTOR_NAMES[sector]}. Jelaskan kekuatan, kelemahan, dan rekomendasi strategis investor.')">
+      <i class="fas fa-robot" style="color:var(--accent)"></i> Minta analisis mendalam dari AI → 
+    </button>
+  `;
+
+  setTimeout(() => {
+    destroyChart('f-radar');
+    const ctx = document.getElementById('f-radar');
+    if (ctx) {
+      chartInstances['f-radar'] = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: ['Valuasi', 'Profitabilitas', 'Kes. Keuangan', 'Pertumbuhan'],
+          datasets: [{ label: ticker, data: [cat.valuasi, cat.profitabilitas, cat.kesehatan, cat.pertumbuhan],
+            backgroundColor: 'rgba(59,130,246,0.15)', borderColor: '#3B82F6',
+            borderWidth: 2, pointBackgroundColor: '#3B82F6', pointRadius: 4 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          scales: { r: { min:0, max:100, ticks:{ stepSize:25, font:{size:10}, color:'#5C6380', backdropColor:'transparent' },
+            grid:{color:'rgba(255,255,255,0.07)'}, pointLabels:{font:{size:11}, color:'#9AA0B4'} } },
+          plugins: { legend:{ display:false } }
+        }
+      });
+    }
+  }, 100);
+}
+
+// ═══════════════════════════ PANEL 2: DCF ═══════════════════════════
+
+const PRESETS_DCF = {
+  bbca:   { ticker:'BBCA', fcf:28000, g1:14, g2:10, tg:4, wacc:10, shares:24.6, netcash:50000, price:9000, mos:20 },
+  tlkm:   { ticker:'TLKM', fcf:22000, g1:8, g2:6, tg:3.5, wacc:9, shares:98.7, netcash:-30000, price:3800, mos:25 },
+  growth: { ticker:'GOTO', fcf:-2000, g1:40, g2:25, tg:5, wacc:14, shares:1200, netcash:15000, price:62, mos:30 }
+};
+
+function dLoadPreset(key) {
+  const p = PRESETS_DCF[key];
+  document.getElementById('d-ticker').value = p.ticker;
+  ['fcf','g1','g2','tg','wacc','shares','netcash','price','mos'].forEach(k => {
+    document.getElementById('d-'+k).value = p[k];
+  });
+}
+
+function runDCF() {
+  const ticker = document.getElementById('d-ticker').value.trim().toUpperCase() || 'SAHAM';
+  const fcf0   = num('d-fcf');
+  const g1     = num('d-g1') / 100;
+  const g2     = num('d-g2') / 100;
+  const tg     = num('d-tg') / 100;
+  const wacc   = num('d-wacc') / 100;
+  const shares = num('d-shares');
+  const netcash= num('d-netcash') || 0;
+  const price  = num('d-price');
+  const mos    = (num('d-mos') || 20) / 100;
+
+  if (!fcf0 || !wacc || !shares) { alert('Minimal isi: FCF, WACC, dan Jumlah Saham.'); return; }
+  if (tg >= wacc) { alert('Terminal Growth Rate harus lebih kecil dari WACC.'); return; }
+
+  // 10-year projection + terminal
+  let pvSum = 0; let fcf = fcf0;
+  const fcfArr = []; const pvArr = [];
+
+  for (let t = 1; t <= 10; t++) {
+    fcf = fcf * (1 + (t <= 5 ? g1 : g2));
+    const pv = fcf / Math.pow(1 + wacc, t);
+    pvSum += pv;
+    fcfArr.push(fcf);
+    pvArr.push(pv);
+  }
+
+  const terminalValue = (fcfArr[9] * (1 + tg)) / (wacc - tg);
+  const pvTerminal = terminalValue / Math.pow(1 + wacc, 10);
+  const enterpriseValue = pvSum + pvTerminal;
+  const equityValue = enterpriseValue + netcash;
+  const intrinsicValue = equityValue / shares;
+  const mosPrice = intrinsicValue * (1 - mos);
+
+  const upside = price ? ((intrinsicValue - price) / price * 100) : null;
+  const signal = upside !== null ? (upside > 20 ? 'Undervalued' : upside < -15 ? 'Overvalued' : 'Fair Value') : 'N/A';
+  const signalColor = signal === 'Undervalued' ? '#22C55E' : signal === 'Overvalued' ? '#EF4444' : '#F59E0B';
+
+  // Sensitivity: 3 scenarios
+  function calcIntrinsic(g1m, g2m, waccm) {
+    let pvS = 0; let f = fcf0;
+    for (let t = 1; t <= 10; t++) {
+      f = f * (1 + (t <= 5 ? g1m : g2m));
+      pvS += f / Math.pow(1 + waccm, t);
+    }
+    const lastF = fcf0 * Math.pow(1+g1m, 5) * Math.pow(1+g2m, 5);
+    const tv = (lastF * (1+tg)) / (waccm - tg);
+    const pvT = tv / Math.pow(1+waccm, 10);
+    return ((pvS + pvT + netcash) / shares);
+  }
+
+  const bearIV = calcIntrinsic(g1*0.6, g2*0.6, wacc*1.15);
+  const baseIV = intrinsicValue;
+  const bullIV = calcIntrinsic(g1*1.4, g2*1.4, wacc*0.9);
+
+  const labels = ['Y1','Y2','Y3','Y4','Y5','Y6','Y7','Y8','Y9','Y10'];
+
+  const el = document.getElementById('d-result');
+  el.style.display = '';
+  el.innerHTML = `
+    <div class="card">
+      <div class="dcf-main">
+        <div class="dcf-stat">
+          <div class="dcf-stat-label">NILAI INTRINSIK / SAHAM</div>
+          <div class="dcf-stat-value" style="color:var(--accent2)">Rp ${intrinsicValue.toLocaleString('id-ID', {maximumFractionDigits:0})}</div>
+          <div class="dcf-stat-sub">Enterprise Value: Rp ${(enterpriseValue/1000).toFixed(1)}T</div>
+        </div>
+        <div class="dcf-stat">
+          <div class="dcf-stat-label">HARGA BELI (MOS ${(mos*100).toFixed(0)}%)</div>
+          <div class="dcf-stat-value" style="color:var(--purple)">Rp ${mosPrice.toLocaleString('id-ID', {maximumFractionDigits:0})}</div>
+          <div class="dcf-stat-sub">Margin of safety price</div>
+        </div>
+        <div class="dcf-stat">
+          <div class="dcf-stat-label">SINYAL vs HARGA PASAR</div>
+          <div class="dcf-stat-value" style="color:${signalColor}">${signal}</div>
+          <div class="dcf-stat-sub">${upside !== null ? (upside > 0 ? '+' : '') + upside.toFixed(1) + '% upside potential' : 'Harga pasar tidak diisi'}</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="slabel" style="margin-top:0">Proyeksi FCF 10 Tahun (Rp Miliar)</div>
+      <div class="chart-wrap"><canvas id="d-fcf-chart"></canvas></div>
+
+      <div class="slabel">Dekomposisi Nilai</div>
+      <table class="data-table">
+        <tr><td>PV FCF Fase 1 (Y1–Y5)</td><td class="center" style="color:var(--text)">${pvArr.slice(0,5).reduce((a,b)=>a+b,0).toLocaleString('id-ID',{maximumFractionDigits:0})} M</td></tr>
+        <tr><td>PV FCF Fase 2 (Y6–Y10)</td><td class="center" style="color:var(--text)">${pvArr.slice(5).reduce((a,b)=>a+b,0).toLocaleString('id-ID',{maximumFractionDigits:0})} M</td></tr>
+        <tr><td>PV Terminal Value</td><td class="center" style="color:var(--text)">${pvTerminal.toLocaleString('id-ID',{maximumFractionDigits:0})} M</td></tr>
+        <tr><td>Net Cash / (Net Debt)</td><td class="center" style="color:var(--text)">${netcash.toLocaleString('id-ID',{maximumFractionDigits:0})} M</td></tr>
+        <tr><td><strong>Enterprise Value</strong></td><td class="center" style="color:var(--accent2); font-weight:700">${enterpriseValue.toLocaleString('id-ID',{maximumFractionDigits:0})} M</td></tr>
+      </table>
+
+      <div class="slabel">Analisis Skenario (Sensitivitas)</div>
+      <div class="dcf-scenario-grid">
+        <div class="dcf-scenario" style="border-color:rgba(239,68,68,0.3); background:rgba(239,68,68,0.05)">
+          <div class="dcf-scenario-label">BEAR CASE</div>
+          <div class="dcf-scenario-val" style="color:#EF4444">Rp ${bearIV.toLocaleString('id-ID',{maximumFractionDigits:0})}</div>
+          <div class="dcf-scenario-desc">Growth -40%, WACC +15%</div>
+        </div>
+        <div class="dcf-scenario" style="border-color:rgba(59,130,246,0.3); background:rgba(59,130,246,0.05)">
+          <div class="dcf-scenario-label">BASE CASE</div>
+          <div class="dcf-scenario-val" style="color:#3B82F6">Rp ${baseIV.toLocaleString('id-ID',{maximumFractionDigits:0})}</div>
+          <div class="dcf-scenario-desc">Asumsi dasar</div>
+        </div>
+        <div class="dcf-scenario" style="border-color:rgba(34,197,94,0.3); background:rgba(34,197,94,0.05)">
+          <div class="dcf-scenario-label">BULL CASE</div>
+          <div class="dcf-scenario-val" style="color:#22C55E">Rp ${bullIV.toLocaleString('id-ID',{maximumFractionDigits:0})}</div>
+          <div class="dcf-scenario-desc">Growth +40%, WACC -10%</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="ask-btn" onclick="sendPrompt('Berikan pendapat mendalam tentang hasil DCF valuation ${ticker}: nilai intrinsik Rp ${intrinsicValue.toFixed(0)} per saham dengan sinyal ${signal}. Apa yang perlu diperhatikan investor dari asumsi DCF ini?')">
+      <i class="fas fa-robot" style="color:var(--accent)"></i> Diskusikan asumsi DCF ini dengan AI →
+    </button>
+  `;
+
+  setTimeout(() => {
+    destroyChart('d-fcf-chart');
+    const ctx = document.getElementById('d-fcf-chart');
+    if (ctx) {
+      chartInstances['d-fcf-chart'] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label:'FCF (nominal)', data: fcfArr, backgroundColor: fcfArr.map(v => v >= 0 ? 'rgba(59,130,246,0.7)' : 'rgba(239,68,68,0.7)'), borderRadius: 4 },
+            { label:'PV FCF', data: pvArr, type:'line', borderColor:'#22C55E', borderWidth:2, pointRadius:3, pointBackgroundColor:'#22C55E', tension:0.3, yAxisID:'y' }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          scales: {
+            x: { grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#5C6380', font:{size:10}} },
+            y: { grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#5C6380', font:{size:10}} }
+          },
+          plugins: { legend:{ labels:{color:'#9AA0B4', font:{size:11}} } }
+        }
+      });
+    }
+  }, 100);
+}
+
+// ═══════════════════════════ PANEL 3: HISTORICAL ═══════════════════════════
+
+const HIST_FIELDS = [
+  { id:'pe', label:'P/E Ratio', suf:'x' },
+  { id:'roe', label:'ROE (%)', suf:'%' },
+  { id:'npm', label:'Net Margin (%)', suf:'%' },
+  { id:'de', label:'D/E Ratio', suf:'x' },
+  { id:'revg', label:'Revenue Growth (%)', suf:'%' },
+  { id:'epsg', label:'EPS Growth (%)', suf:'%' },
+  { id:'fcfy', label:'FCF Yield (%)', suf:'%' },
+];
+
+let histCurrentYear = 4;
+
+function histSwitchYear(idx) {
+  histCurrentYear = idx;
+  document.querySelectorAll('.year-tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+  document.querySelectorAll('.hist-year-form').forEach((f,i) => f.classList.toggle('active', i===idx));
+}
+
+function initHistForms() {
+  const labels = ['Thn -4','Thn -3','Thn -2','Thn -1','Thn 0 (Terkini)'];
+  const container = document.getElementById('hist-forms');
+  container.innerHTML = labels.map((lbl, idx) => `
+    <div class="hist-year-form ${idx===4?'active':''}" id="hform-${idx}">
+      <div class="slabel">${lbl}</div>
+      <div class="hist-input-grid">
+        <div class="input-group">
+          <label>Tahun</label>
+          <input type="number" id="h-year-${idx}" placeholder="${2021+idx}" step="1">
+        </div>
+        ${HIST_FIELDS.map(f => `
+          <div class="input-group">
+            <label>${f.label}</label>
+            <input type="number" id="h-${idx}-${f.id}" placeholder="—" step="0.1">
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+initHistForms();
+
+function runHistorical() {
+  const ticker = document.getElementById('h-ticker').value.trim().toUpperCase() || 'SAHAM';
+  const years = [];
+  for (let i = 0; i < 5; i++) {
+    const yr = document.getElementById('h-year-'+i).value || (2021+i);
+    const row = { year: yr };
+    let hasData = false;
+    HIST_FIELDS.forEach(f => {
+      const v = parseFloat(document.getElementById(`h-${i}-${f.id}`).value);
+      row[f.id] = isNaN(v) ? null : v;
+      if (!isNaN(v)) hasData = true;
+    });
+    if (hasData) years.push(row);
+  }
+  if (years.length < 2) { alert('Isi minimal 2 tahun data untuk analisis historis.'); return; }
+
+  const labels = years.map(y => y.year);
+
+  // CAGR helper
+  function cagr(arr) {
+    const valid = arr.filter(v => v !== null);
+    if (valid.length < 2) return null;
+    const first = valid[0], last = valid[valid.length-1];
+    const n = valid.length - 1;
+    return (Math.pow(last/first, 1/n) - 1) * 100;
+  }
+
+  const el = document.getElementById('h-result');
+  el.style.display = '';
+
+  el.innerHTML = `
+    <div class="card">
+      <div class="score-ticker" style="margin-bottom:4px">${ticker}</div>
+      <div class="score-sector">Analisis Tren ${years[0].year} – ${years[years.length-1].year} (${years.length} titik data)</div>
+      <div class="divider"></div>
+
+      <div class="slabel" style="margin-top:0">Tren ROE & Net Margin (%)</div>
+      <div class="chart-wrap"><canvas id="h-profit-chart"></canvas></div>
+
+      <div class="slabel">Tren Valuasi (P/E & D/E)</div>
+      <div class="chart-wrap"><canvas id="h-val-chart"></canvas></div>
+
+      <div class="slabel">Tren Pertumbuhan (Revenue & EPS Growth)</div>
+      <div class="chart-wrap"><canvas id="h-growth-chart"></canvas></div>
+
+      <div class="slabel">Ringkasan CAGR & Statistik</div>
+      <table class="data-table">
+        <thead><tr><th>Metrik</th><th class="center">Awal (${years[0].year})</th><th class="center">Akhir (${years[years.length-1].year})</th><th class="center">CAGR / Rata-rata</th><th class="center">Tren</th></tr></thead>
+        <tbody>
+          ${HIST_FIELDS.map(f => {
+            const vals = years.map(y => y[f.id]);
+            const first = vals.find(v => v !== null);
+            const last = [...vals].reverse().find(v => v !== null);
+            const c = cagr(vals);
+            const avg = vals.filter(v=>v!==null).reduce((a,b)=>a+b,0) / vals.filter(v=>v!==null).length;
+            const trend = c !== null ? (c > 2 ? '↑' : c < -2 ? '↓' : '→') : '—';
+            const trendColor = c !== null ? (c > 2 ? 'var(--green)' : c < -2 ? 'var(--red)' : 'var(--yellow)') : 'var(--text3)';
+            const isRevMetric = ['de','pe'].includes(f.id);
+            const posGood = !isRevMetric;
+            return `<tr>
+              <td>${f.label}</td>
+              <td class="center">${first !== null && first !== undefined ? (+first).toFixed(1)+f.suf : '—'}</td>
+              <td class="center">${last !== null && last !== undefined ? (+last).toFixed(1)+f.suf : '—'}</td>
+              <td class="center">${c !== null ? (c > 0 ? '+' : '') + c.toFixed(1) + '%/yr' : avg.toFixed(1)+f.suf}</td>
+              <td class="center" style="color:${trendColor}; font-weight:700; font-size:16px">${trend}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+    <button class="ask-btn" onclick="sendPrompt('Analisis tren historis ${ticker} dari ${years[0].year} hingga ${years[years.length-1].year}. Apa saja pola positif dan negatif yang perlu diperhatikan investor jangka panjang?')">
+      <i class="fas fa-robot" style="color:var(--accent)"></i> Minta interpretasi tren historis dari AI →
+    </button>
+  `;
+
+  setTimeout(() => {
+    // Profitability chart
+    destroyChart('h-profit-chart');
+    const pCtx = document.getElementById('h-profit-chart');
+    if (pCtx) {
+      chartInstances['h-profit-chart'] = new Chart(pCtx, {
+        type: 'line',
+        data: { labels, datasets: [
+          { label:'ROE (%)', data:years.map(y=>y.roe), borderColor:'#3B82F6', backgroundColor:'rgba(59,130,246,0.1)', tension:0.3, pointRadius:4, fill:true },
+          { label:'Net Margin (%)', data:years.map(y=>y.npm), borderColor:'#22C55E', backgroundColor:'rgba(34,197,94,0.1)', tension:0.3, pointRadius:4, fill:true }
+        ]},
+        options: lineOpts()
+      });
+    }
+    // Valuation chart
+    destroyChart('h-val-chart');
+    const vCtx = document.getElementById('h-val-chart');
+    if (vCtx) {
+      chartInstances['h-val-chart'] = new Chart(vCtx, {
+        type: 'line',
+        data: { labels, datasets: [
+          { label:'P/E (x)', data:years.map(y=>y.pe), borderColor:'#F59E0B', tension:0.3, pointRadius:4 },
+          { label:'D/E (x)', data:years.map(y=>y.de), borderColor:'#EF4444', tension:0.3, pointRadius:4, yAxisID:'y1' }
+        ]},
+        options: { ...lineOpts(), scales: { x: axX(), y: axY('P/E'), y1: axY('D/E', true) } }
+      });
+    }
+    // Growth chart
+    destroyChart('h-growth-chart');
+    const gCtx = document.getElementById('h-growth-chart');
+    if (gCtx) {
+      chartInstances['h-growth-chart'] = new Chart(gCtx, {
+        type: 'bar',
+        data: { labels, datasets: [
+          { label:'Rev Growth (%)', data:years.map(y=>y.revg), backgroundColor:'rgba(59,130,246,0.6)', borderRadius:4 },
+          { label:'EPS Growth (%)', data:years.map(y=>y.epsg), backgroundColor:'rgba(167,139,250,0.6)', borderRadius:4 }
+        ]},
+        options: lineOpts()
+      });
+    }
+  }, 100);
+}
+
+function axX() { return { grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#5C6380', font:{size:10}} }; }
+function axY(label='', right=false) { return { position: right ? 'right':'left', grid:{color: right?'transparent':'rgba(255,255,255,0.05)'}, ticks:{color:'#5C6380', font:{size:10}} }; }
+function lineOpts() { return { responsive:true, maintainAspectRatio:false, scales:{x:axX(),y:axY()}, plugins:{legend:{labels:{color:'#9AA0B4', font:{size:11}}}} }; }
+
+// ═══════════════════════════ PANEL 4: SCREENER ═══════════════════════════
+
+const SCREENER_FIELDS = [
+  { id:'pe', label:'P/E Ratio', suf:'x', inv:true },
+  { id:'pb', label:'P/B Ratio', suf:'x', inv:true },
+  { id:'roe', label:'ROE (%)', suf:'%', inv:false },
+  { id:'npm', label:'Net Margin (%)', suf:'%', inv:false },
+  { id:'de', label:'D/E Ratio', suf:'x', inv:true },
+  { id:'cr', label:'Current Ratio', suf:'x', inv:false },
+  { id:'divy', label:'Div Yield (%)', suf:'%', inv:false },
+  { id:'revg', label:'Rev Growth (%)', suf:'%', inv:false },
+  { id:'epsg', label:'EPS Growth (%)', suf:'%', inv:false },
+  { id:'fcfy', label:'FCF Yield (%)', suf:'%', inv:false },
+];
+
+function initScreenerSlots() {
+  const container = document.getElementById('screener-slots');
+  container.innerHTML = [1,2,3,4].map(n => `
+    <div class="screener-slot">
+      <div class="screener-slot-title"><span class="slot-num">${n}</span> Saham ${n}</div>
+      <div class="input-group" style="margin-bottom:8px">
+        <label>Kode Saham</label>
+        <input class="ticker-input" style="font-size:13px; padding:6px 10px" id="sc-ticker-${n}" placeholder="BBCA">
+      </div>
+      ${SCREENER_FIELDS.map(f => `
+        <div class="input-group" style="margin-bottom:6px">
+          <label>${f.label}</label>
+          <input type="number" id="sc-${n}-${f.id}" placeholder="—" step="0.1" style="font-size:12px; padding:6px 8px">
+        </div>`).join('')}
+      <div class="input-group" style="margin-bottom:0">
+        <label>Sektor</label>
+        <select id="sc-sector-${n}" style="font-size:12px; padding:6px 8px; border:1px solid var(--border2); border-radius:var(--radius); background:var(--bg3); color:var(--text); outline:none; font-family:var(--mono)">
+          ${Object.entries(SECTOR_NAMES).map(([k,v]) => `<option value="${k}">${v}</option>`).join('')}
+        </select>
+      </div>
+    </div>`).join('');
+}
+initScreenerSlots();
+
+function runScreener() {
+  const stocks = [];
+  for (let n = 1; n <= 4; n++) {
+    const ticker = document.getElementById(`sc-ticker-${n}`).value.trim().toUpperCase();
+    if (!ticker) continue;
+    const sector = document.getElementById(`sc-sector-${n}`).value;
+    const bm = BENCHMARKS[sector] || BENCHMARKS.general;
+    const row = { ticker, sector, bm };
+    SCREENER_FIELDS.forEach(f => {
+      row[f.id] = parseFloat(document.getElementById(`sc-${n}-${f.id}`).value);
+      if (isNaN(row[f.id])) row[f.id] = null;
+    });
+    // Compute overall score
+    const sc = { v:[], p:[], k:[], g:[] };
+    if (row.pe !== null) sc.v.push(scoreMetric(row.pe, bm.pe[0], bm.pe[1], true));
+    if (row.pb !== null) sc.v.push(scoreMetric(row.pb, bm.pb[0], bm.pb[1], true));
+    if (row.divy !== null) sc.v.push(Math.min(100, row.divy*15));
+    if (row.roe !== null) sc.p.push(scoreMetric(row.roe, bm.roe[0], bm.roe[1]));
+    if (row.npm !== null) sc.p.push(scoreMetric(row.npm, bm.npm[0], bm.npm[1]));
+    if (row.de !== null) sc.k.push(scoreMetric(row.de, bm.de[0], bm.de[1], true));
+    if (row.cr !== null) sc.k.push(scoreMetric(row.cr, bm.cr[0], bm.cr[1]));
+    if (row.fcfy !== null) sc.k.push(Math.min(100, Math.max(0, row.fcfy*8)));
+    if (row.revg !== null) sc.g.push(Math.min(100, Math.max(0, row.revg*3)));
+    if (row.epsg !== null) sc.g.push(Math.min(100, Math.max(0, row.epsg*3)));
+    const avg = arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : 50;
+    const cat = { v: avg(sc.v), p: avg(sc.p), k: avg(sc.k), g: avg(sc.g) };
+    row.score = Math.round(cat.v*0.25 + cat.p*0.30 + cat.k*0.30 + cat.g*0.15);
+    row.cat = cat;
+    stocks.push(row);
+  }
+
+  if (stocks.length < 2) { alert('Isi minimal 2 saham untuk komparasi.'); return; }
+
+  // For each field, find best & worst value
+  function getBestWorst(field, inv) {
+    const vals = stocks.map(s => s[field]).filter(v => v !== null && !isNaN(v));
+    if (!vals.length) return { best: null, worst: null };
+    const best  = inv ? Math.min(...vals) : Math.max(...vals);
+    const worst = inv ? Math.max(...vals) : Math.min(...vals);
+    return { best, worst };
+  }
+
+  const el = document.getElementById('s-result');
+  el.style.display = '';
+
+  el.innerHTML = `
+    <div class="card">
+      <div class="slabel" style="margin-top:0">Skor Komposit Fundamental</div>
+      <div class="chart-wrap"><canvas id="s-compare-chart"></canvas></div>
+
+      <div class="slabel">Tabel Komparasi Detail</div>
+      <div class="compare-table-wrap">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>Metrik</th>
+              ${stocks.map(s => `<th>${s.ticker}<br><span style="font-size:9px; color:var(--text3); font-weight:400">${SECTOR_NAMES[s.sector]}</span></th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Skor Fundamental</td>
+              ${stocks.map(s => {
+                const maxScore = Math.max(...stocks.map(x=>x.score));
+                return `<td class="center ${s.score === maxScore ? 'best-val' : ''}">${s.score}/100</td>`;
+              }).join('')}
+            </tr>
+            ${SCREENER_FIELDS.map(f => {
+              const bw = getBestWorst(f.id, f.inv);
+              return `<tr>
+                <td>${f.label}</td>
+                ${stocks.map(s => {
+                  const v = s[f.id];
+                  if (v === null || isNaN(v)) return '<td class="center" style="color:var(--text3)">—</td>';
+                  const isBest  = bw.best  !== null && Math.abs(v - bw.best)  < 0.0001;
+                  const isWorst = bw.worst !== null && Math.abs(v - bw.worst) < 0.0001 && stocks.length > 1;
+                  const cls = isBest ? 'best-val' : isWorst ? 'worst-val' : '';
+                  return `<td class="center ${cls}">${v.toFixed(1)}${f.suf}</td>`;
+                }).join('')}
+              </tr>`;
+            }).join('')}
+            <tr style="border-top: 2px solid var(--border2)">
+              <td><strong>Rekomendasi</strong></td>
+              ${(() => {
+                const maxScore = Math.max(...stocks.map(s=>s.score));
+                return stocks.map(s => {
+                  const r = s.score === maxScore ? ['Terbaik', 'tag-green'] :
+                            s.score >= 60 ? ['Layak', 'tag-blue'] :
+                            s.score >= 45 ? ['Cukup', 'tag-yellow'] : ['Perhatian', 'tag-red'];
+                  return `<td class="center"><span class="tag ${r[1]}">${r[0]}</span></td>`;
+                }).join('');
+              })()}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <button class="ask-btn" onclick="sendPrompt('Bandingkan fundamental ${stocks.map(s=>s.ticker).join(', ')} berdasarkan skor komposit ${stocks.map(s=>s.ticker+': '+s.score).join(', ')}. Saham mana yang paling menarik secara fundamental dan mengapa?')">
+      <i class="fas fa-robot" style="color:var(--accent)"></i> Minta rekomendasi pilihan terbaik dari AI →
+    </button>
+  `;
+
+  setTimeout(() => {
+    destroyChart('s-compare-chart');
+    const ctx = document.getElementById('s-compare-chart');
+    if (ctx) {
+      const COLORS = ['#3B82F6','#22C55E','#F59E0B','#A78BFA'];
+      chartInstances['s-compare-chart'] = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: ['Valuasi','Profitabilitas','Kes. Keuangan','Pertumbuhan'],
+          datasets: stocks.map((s, i) => ({
+            label: s.ticker,
+            data: [s.cat.v, s.cat.p, s.cat.k, s.cat.g],
+            backgroundColor: COLORS[i] + '20',
+            borderColor: COLORS[i],
+            borderWidth: 2,
+            pointBackgroundColor: COLORS[i],
+            pointRadius: 4
+          }))
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          scales: { r: { min:0, max:100, ticks:{stepSize:25, font:{size:10}, color:'#5C6380', backdropColor:'transparent'},
+            grid:{color:'rgba(255,255,255,0.07)'}, pointLabels:{font:{size:11}, color:'#9AA0B4'} } },
+          plugins: { legend:{ labels:{ color:'#9AA0B4', font:{size:11} } } }
+        }
+      });
+    }
+  }, 100);
+}
+
+// ═══════════════════════════ HELPER ═══════════════════════════
+
+function sendPrompt(text) {
+  if (typeof window.sendPrompt === 'function') { window.sendPrompt(text); return; }
+  // fallback: copy to clipboard
+  navigator.clipboard.writeText(text).then(() => alert('Prompt disalin! Tempel ke chat AI Anda:\n\n' + text)).catch(() => alert(text));
+}
+</script>
+</body>
+</html>
